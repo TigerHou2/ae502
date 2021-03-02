@@ -151,7 +151,7 @@ for i = 1:n
     [~,Y] = ode45(@(t,yy) Y_dot(yy), tspan, Y0, options);
     figure(1)
     hold on
-    plot3(Y(:,37),Y(:,38),Y(:,39),'r','LineWidth',1.2);
+    plot3(Y(:,37),Y(:,38),Y(:,39),'r');
     hold off
     
     % plot stable manifold
@@ -162,35 +162,27 @@ for i = 1:n
     [~,Y] = ode45(@(t,yy) Y_dot(yy), tspan, Y0, options);
     figure(2)
     hold on
-    plot3(Y(:,37),Y(:,38),Y(:,39),'b','LineWidth',1.2);
+    plot3(Y(:,37),Y(:,38),Y(:,39),'b','LineWidth);
     hold off
     
 end
 
 figure(1)
 view(3)
-hold on
-moon = scatter3(x2,0,0,'b','filled');
-hold off
 grid on
 grid minor
 title(['Unstable Manifolds, d = ' num2str(du)])
 xlabel('x')
 ylabel('y')
 zlabel('z')
-legend(moon,'The Moon','Location','Best')
-latexify(16,12,16)
+latexify(16,16,12)
 
 figure(2)
 view(3)
-hold on
-moon = scatter3(x2,0,0,'r','filled');
-hold off
 grid on
 grid minor
 title(['Stable Manifolds, d = ' num2str(ds)])
 xlabel('x')
 ylabel('y')
 zlabel('z')
-legend(moon,'The Moon','Location','Best')
-latexify(16,12,16)
+latexify(16,16,12)

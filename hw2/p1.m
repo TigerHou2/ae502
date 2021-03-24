@@ -4,6 +4,9 @@ close all
 clear;clc
 
 %% Part a
+
+tic
+
 % Earth orbit general parameters
 mu = 3.986e14; % m^3/s^2, Earth gravitational parameter
 J2 = 1082.63e-6; % J2 perturbation coefficient
@@ -36,10 +39,18 @@ rv0 = [r0;v0];
 options = odeset('RelTol',1e-9,'AbsTol',1e-12);
 [tOut,rvOut] = ode45(@(t,rv)ff(rv,mu,1,p),[0,10*T],rv0,options);
 
+toc
+
 % plotting
 rvOut = rvOut';
-% plot3(rvOut(1,:), rvOut(2,:),rvOut(3,:))
-% axis equal
+figure(1)
+plot3(rvOut(1,:), rvOut(2,:),rvOut(3,:),'r','LineWidth',1.2)
+xlabel('x, m')
+ylabel('y, m')
+zlabel('z, m')
+axis equal
+setgrid
+latexify(16,14,14)
 
 %% Part b
 % convert position, velcoity data into orbit parameters
@@ -51,6 +62,34 @@ for j = 1:N
     M_ = E_ - norm(e_)*sin(E_);
     paramOut(:,j) = [a_,norm(e_),i_,o_,w_,M_]';
 end
+
+% plot results
+ylabel_vec = {'SMA (a), m', ...
+              'ECC (e)', ...
+              'INC (i), deg', ...
+              'RAAN ($\Omega$), deg', ...
+              'AOP ($\omega$), deg', ...
+              'MA (M), deg'};
+xlabel_val = 'Orbit Count';
+figure(2)
+for j = 1:6
+    subplot(3,2,j)
+    dat = paramOut(j,:);
+    if j == 4 % RAAN loop-around after 2*pi
+        dat = mod(dat+pi,2*pi)-pi;
+    end
+    if j == 6 % mean anomaly loop-around after 2*pi
+        dat = mod(dat,2*pi);
+    end
+    if j >= 3 % conversion to degrees
+        dat = rad2deg(dat);
+    end
+    plot(tOut/T,dat,'Linewidth',1.2)
+    xlabel(xlabel_val)
+    ylabel(ylabel_vec{j})
+    setgrid
+end
+latexify(20,18,14)
 
 %% Part c
 n = sqrt(mu/a^3); % mean motion
@@ -66,10 +105,36 @@ param0 = [a,e,i,o,w,M0]';
 
 paramMean = ([dadt,dedt,didt,dodt,dwdt,dMdt]') * (tOut') + param0;
 
-plot(tOut,paramMean(6,:))
-hold on
-plot(tOut,paramOut(6,:))
-hold off
+for j = 1:6
+    subplot(3,2,j)
+    dat = paramMean(j,:);
+    if j == 4 % RAAN loop-around after 2*pi
+        dat = mod(dat+pi,2*pi)-pi;
+    end
+    if j == 6 % mean anomaly loop-around after 2*pi
+        dat = mod(dat,2*pi);
+    end
+    if j >= 3 % conversion to degrees
+        dat = rad2deg(dat);
+    end
+    hold on
+    plot(tOut/T,dat,'r','Linewidth',1.2)
+    setgrid
+    grid minor
+    hold off
+%     xlabel(xlabel_val)
+%     ylabel(ylabel_vec{j})
+    if j == 4 % add legend in the relatively empty plot
+        legend('Numerical','Mean Motion','Location','best')
+    end
+end
+latexify(20,18,14)
+
+% figure(2)
+% plot(tOut,paramMean(6,:))
+% hold on
+% plot(tOut,paramOut(6,:))
+% hold off
 
 %% function definitions
 function rv_dot = ff(rv,mu,N,p)

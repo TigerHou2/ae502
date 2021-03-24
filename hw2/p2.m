@@ -3,6 +3,8 @@
 close all
 clear;clc
 
+tic
+
 mu = 3.986e14; % m^3/s^2, Earth gravitational parameter
 J2 = 1082.63e-6; % J2 perturbation coefficient
 req = 6378.137e3; % km, equatorial radius
@@ -31,8 +33,36 @@ param0 = [a,e,i,o,w,M0]';
 options = odeset('RelTol',1e-9,'AbsTol',1e-12);
 [tOut,paramOut] = ode45(@(t,params)ff(params,mu,p),[0,10*T],param0,options);
 
+toc
+
 % plotting
-plot(tOut,paramOut(:,5))
+paramOut = paramOut';
+ylabel_vec = {'SMA (a), m', ...
+              'ECC (e)', ...
+              'INC (i), deg', ...
+              'RAAN ($\Omega$), deg', ...
+              'AOP ($\omega$), deg', ...
+              'MA (M), deg'};
+xlabel_val = 'Orbit Count';
+figure(2)
+for j = 1:6
+    subplot(3,2,j)
+    dat = paramOut(j,:);
+    if j == 4 % RAAN loop-around after 2*pi
+        dat = mod(dat+pi,2*pi)-pi;
+    end
+    if j == 6 % mean anomaly loop-around after 2*pi
+        dat = mod(dat,2*pi);
+    end
+    if j >= 3 % conversion to degrees
+        dat = rad2deg(dat);
+    end
+    plot(tOut/T,dat,'Linewidth',1.2)
+    xlabel(xlabel_val)
+    ylabel(ylabel_vec{j})
+    setgrid
+end
+latexify(20,18,14)
 
 %% function definitions
 function param_dot = ff(params,mu,A)

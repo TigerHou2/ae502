@@ -104,11 +104,12 @@ dMdt = dM0dt + n;
 
 param0 = [a,e,i,o,w,M0]';
 
-paramMean = ([dadt,dedt,didt,dodt,dwdt,dMdt]') * (tOut') + param0;
+paramMean = ([dadt,dedt,didt,dodt,dwdt,dM0dt]') * (tOut') + param0;
 
 for j = 1:6
     subplot(3,2,j)
-    dat = paramOut(j,:)-paramMean(j,:);
+    dat = paramMean(j,:);
+%     dat = paramOut(j,:)-paramMean(j,:);
     if j == 4 % RAAN loop-around after 2*pi
         dat = mod(dat+pi,2*pi)-pi;
     end
@@ -118,15 +119,15 @@ for j = 1:6
     if j >= 3 % conversion to degrees
         dat = rad2deg(dat);
     end
-%     hold on
+    hold on
     plot(tOut/T,dat,'Linewidth',1.2)
     setgrid
     grid minor
-%     hold off
+    hold off
     xlabel(xlabel_val)
     ylabel(ylabel_vec{j})
     if j == 4 % add legend in the relatively empty plot
-%         legend('Numerical','Mean Motion','Location','best')
+        legend('Numerical','Mean Motion','Location','best')
     end
 end
 latexify(20,18,14)

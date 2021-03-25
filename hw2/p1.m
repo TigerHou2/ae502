@@ -99,7 +99,8 @@ dedt = 0;
 didt = 0;
 dodt = -3/2*J2*n*(req/p)^2*cos(i);
 dwdt = 3/4*J2*n*(req/p)^2*(5*cos(i)^2-1);
-dMdt = 3/4*J2*n*(req/p)^2*sqrt(1-e^2)*(3*cos(i)^2-1);
+dM0dt = 3/4*J2*n*(req/p)^2*sqrt(1-e^2)*(3*cos(i)^2-1);
+dMdt = dM0dt + n;
 
 param0 = [a,e,i,o,w,M0]';
 
@@ -107,25 +108,25 @@ paramMean = ([dadt,dedt,didt,dodt,dwdt,dMdt]') * (tOut') + param0;
 
 for j = 1:6
     subplot(3,2,j)
-    dat = paramMean(j,:);
+    dat = paramOut(j,:)-paramMean(j,:);
     if j == 4 % RAAN loop-around after 2*pi
         dat = mod(dat+pi,2*pi)-pi;
     end
     if j == 6 % mean anomaly loop-around after 2*pi
-        dat = mod(dat,2*pi);
+        dat = mod(dat+pi,2*pi)-pi;
     end
     if j >= 3 % conversion to degrees
         dat = rad2deg(dat);
     end
-    hold on
-    plot(tOut/T,dat,'r','Linewidth',1.2)
+%     hold on
+    plot(tOut/T,dat,'Linewidth',1.2)
     setgrid
     grid minor
-    hold off
-%     xlabel(xlabel_val)
-%     ylabel(ylabel_vec{j})
+%     hold off
+    xlabel(xlabel_val)
+    ylabel(ylabel_vec{j})
     if j == 4 % add legend in the relatively empty plot
-        legend('Numerical','Mean Motion','Location','best')
+%         legend('Numerical','Mean Motion','Location','best')
     end
 end
 latexify(20,18,14)

@@ -123,7 +123,7 @@ for j = 1:6
     if j >= 3 % conversion to degrees
         delta = rad2deg(delta);
     end
-    plot(tDrag,delta)
+    plot(tDrag,delta,'LineWidth',1.0)
     xlabel(xlabel_val)
     ylabel(ylabel_vec{j})
     setgrid

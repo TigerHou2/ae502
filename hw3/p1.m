@@ -15,8 +15,8 @@ Omars = 7.0879e-5; % rad/s, Mars spin rate
 P = 687 * 24 * 3600; % seconds, Mars orbit period around Sun
 
 % orbit parameters
-e = 0;
-alt = 300; % km, orbit altitude
+e = 0.1;
+alt = 1000; % km, orbit altitude
 a = alt + req;
 
 n = sqrt(mu/a^3); % mean motion
@@ -62,11 +62,13 @@ options = odeset('RelTol',1e-12,'AbsTol',1e-12);
 % plotting
 rvOut = rvOut';
 figure(1)
-plot3(rvOut(1,:), rvOut(2,:),rvOut(3,:),'r','LineWidth',1.2)
+colorplot(rvOut(1,:), rvOut(2,:),rvOut(3,:),...
+            'colormap','bone',...
+            'linewidth',1.2)
 xlabel('x, m')
 ylabel('y, m')
 zlabel('z, m')
-% axis equal
+axis equal
 setgrid
 latexify(16,14,14)
 
@@ -106,7 +108,7 @@ for j = 1:6
     ylabel(ylabel_vec{j})
     setgrid
 end
-latexify(20,18,14)
+latexify(26,16,14)
 
 
 %% Part c
@@ -114,26 +116,30 @@ latexify(20,18,14)
 v_PCPF = nan(size(rvOut(4:6,:)));
 
 for j = 1:size(v_PCPF,2)
-    theta = tOut(j) * Omars;
-    R_eci2ecef = [  cos(theta), sin(theta), 0; ...
-                   -sin(theta), cos(theta), 0; ...
-                    0         , 0         , 1];
-    v_PCPF(:,j) = R_eci2ecef * rvOut(4:6,j);
+%     theta = tOut(j) * Omars;
+%     R_eci2ecef = [  cos(theta), sin(theta), 0; ...
+%                    -sin(theta), cos(theta), 0; ...
+%                     0         , 0         , 1];
+%     v_PCPF(:,j) = R_eci2ecef * rvOut(4:6,j);
+    v_PCPF(:,j) = rvOut(4:6,j) + cross(Omars*[0;0;1],rvOut(1:3,j));
 end
+
+rr = vecnorm(rvOut(1:3,:));
+p2 = rvOut(3,:) ./ rr;
 
 E = 1/2 * vecnorm(v_PCPF).^2 ...
   - 1/2 * Omars^2 * sum(rvOut(1:2,:).^2) ...
-  - mu ./ vecnorm(rvOut(1:3,:));
+  - mu ./ rr ...
+       .* ( 1 - (req./rr).^2 .* J2 .* (3*p2.^2-1)/2 );
 
 E0 = E(1);
 
 figure;
-semilogy(tOut, abs( (E-E0)/E0 ), 'LineWidth', 1.2)
+loglog(tOut, abs( (E-E0)/E0 ), 'LineWidth', 1.5)
 xlabel('Time (s)')
 ylabel('$\frac{||E(t)-E(t_0)||}{||E(t_0)||}$')
 setgrid
-expand
-latexify(16,14,14)
+latexify(18,14,16)
 
 
 %% function definitions

@@ -229,111 +229,111 @@ function [r2, v2] = anglesg ( decl1,decl2,decl3,rtasc1,rtasc2, ...
     fprintf(1,'now refine the answer \n');
     rho2 = 999999.9;
     ll   = 0;
-    while ((abs(rhoold2-rho2) > 1.0e-12) && (ll <= 0 ))  % ll <= 15
-        ll = ll + 1;
-        fprintf(1, ' iteration #%3i \n',ll );
-        rho2 = rhoold2;  % reset now that inside while loop
-
-        % ---------- now form the three position vectors ----------
-        for i= 1 : 3
-            r1(i)=  rhomat(1,1)*l1eci(i)/c1 + rs1(i);
-            r2(i)= -rhomat(2,1)*l2eci(i)    + rs2(i);
-            r3(i)=  rhomat(3,1)*l3eci(i)/c3 + rs3(i);
-        end
-        magr1 = mag( r1 );
-        magr2 = mag( r2 );
-        magr3 = mag( r3 );
-
+%     while ((abs(rhoold2-rho2) > 1.0e-12) && (ll <= 0 ))  % ll <= 15
+%         ll = ll + 1;
+%         fprintf(1, ' iteration #%3i \n',ll );
+%         rho2 = rhoold2;  % reset now that inside while loop
+% 
+%         % ---------- now form the three position vectors ----------
+%         for i= 1 : 3
+%             r1(i)=  rhomat(1,1)*l1eci(i)/c1 + rs1(i);
+%             r2(i)= -rhomat(2,1)*l2eci(i)    + rs2(i);
+%             r3(i)=  rhomat(3,1)*l3eci(i)/c3 + rs3(i);
+%         end
+%         magr1 = mag( r1 );
+%         magr2 = mag( r2 );
+%         magr3 = mag( r3 );
+% 
         [v2,theta,theta1,copa,error] = gibbsh(r1,r2,r3, re, mu);
-
-        rad = 180.0/pi;
-        fprintf(1,'r1 %11.7f %11.7f %11.7f %11.7f %11.7f \n',r1,theta*rad,theta1*rad);
-        fprintf(1,'r2 %11.7f %11.7f %11.7f \n',r2);
-        fprintf(1,'r3 %11.7f %11.7f %11.7f \n',r3);
-        fprintf(1,'w gibbs km/s       v2 %11.7f %11.7f %11.7f \n',v2);
-
-        if ( (strcmp(error, '          ok') == 0) && (copa < 1.0/rad) ) % 0 is false
-            [p,a,ecc,incl,omega,argp,nu,m,arglat,truelon,lonper ] = rv2coeh (r2,v2, re, mu);
-            fprintf(1,'coes init ans %11.4f %11.4f %13.9f %13.7f %11.5f %11.5f %11.5f %11.5f\n',...
-                p,a,ecc,incl*rad,omega*rad,argp*rad,nu*rad,m*rad );
-            % --- hgibbs to get middle vector ----
-            [v2,theta,theta1,copa,error] = hgibbs(r1,r2,r3,jd1,jd2,jd3);
-            fprintf(1,'using hgibbs: ' );
-        end
-
-        [p,a,ecc,incl,omega,argp,nu,m,arglat,truelon,lonper ] = rv2coeh (r2,v2, re, mu);
-        fprintf(1,'coes init ans %11.4f %11.4f %13.9f %13.7f %11.5f %11.5f %11.5f %11.5f\n',...
-            p,a,ecc,incl*rad,omega*rad,argp*rad,nu*rad,m*rad );
-        %fprintf(1,'dr %11.7f m %11.7f m/s \n',1000*mag(r2-r2ans),1000*mag(v2-v2ans) );
-
-        if ( ll <= 8 )  % 4
-            % --- now get an improved estimate of the f and g series --
-            u= mu / ( magr2*magr2*magr2 );
-            rdot= dot(r2,v2)/magr2;
-            udot= (-3.0*mu*rdot) / (magr2^4);
-
-            fprintf(1,'u %17.15f rdot  %11.7f udot %11.7f \n',u,rdot,udot );
-            tausqr= tau1*tau1;
-            f1=  1.0 - 0.5*u*tausqr -(1.0/6.0)*udot*tausqr*tau1;
-            %                       - (1.0/24.0) * u*u*tausqr*tausqr
-            %                       - (1.0/30.0)*u*udot*tausqr*tausqr*tau1;
-            g1= tau1 - (1.0/6.0)*u*tau1*tausqr - (1.0/12.0) * udot*tausqr*tausqr;
-            %                       - (1.0/120.0)*u*u*tausqr*tausqr*tau1
-            %                       - (1.0/120.0)*u*udot*tausqr*tausqr*tausqr;
-            tausqr= tau3*tau3;
-            f3=  1.0 - 0.5*u*tausqr -(1.0/6.0)*udot*tausqr*tau3;
-            %                       - (1.0/24.0) * u*u*tausqr*tausqr
-            %                       - (1.0/30.0)*u*udot*tausqr*tausqr*tau3;
-            g3= tau3 - (1.0/6.0)*u*tau3*tausqr - (1.0/12.0) * udot*tausqr*tausqr;
-            %                       - (1.0/120.0)*u*u*tausqr*tausqr*tau3
-            %                       - (1.0/120.0)*u*udot*tausqr*tausqr*tausqr;
-            fprintf(1,'f1 %11.7f g1 %11.7f f3 %11.7f g3 %11.7f \n',f1,g1,f3,g3 );
-        else
-            % -------- use exact method to find f and g -----------
-            theta  = angl( r1,r2 );
-            theta1 = angl( r2,r3 );
-
-            f1= 1.0 - ( (magr1*(1.0 - cos(theta)) / p ) );
-            g1= ( magr1*magr2*sin(-theta) ) / sqrt( p );  % - angl because backwards
-            f3= 1.0 - ( (magr3*(1.0 - cos(theta1)) / p ) );
-            g3= ( magr3*magr2*sin(theta1) ) / sqrt( p );
-
-        end
-
-        c1=  g3 / (f1*g3 - f3*g1);
-        c3= -g1 / (f1*g3 - f3*g1);
-
-        fprintf(1,' c1 %11.7f c3 %11.7f %11.7f \n',c1,c2,c3);
-
-        % ----- solve for all three ranges via matrix equation ----
-        cmat(1,1)= -c1;
-        cmat(2,1)= -c2;
-        cmat(3,1)= -c3;
-        rhomat = lir*cmat;
-
-        fprintf(1,'rhomat %11.7f %11.7f %11.7f \n',rhomat);
-        %        fprintf(1,'rhomat %11.7f %11.7f %11.7f \n',rhomat/re);
-
-        rhoold1=  rhomat(1,1)/c1;
-        rhoold2=  rhomat(2,1)/c2;
-        rhoold3=  rhomat(3,1)/c3;
-        fprintf(1,'rhoold %11.7f %11.7f %11.7f \n',rhoold1,rhoold2,rhoold3);
-        %   fprintf(1,'rhoold %11.7f %11.7f %11.7f \n',rhoold1/re,rhoold2/re,rhoold3/re);
-
-        for i= 1 : 3
-            r1(i)=  rhomat(1,1)*l1eci(i)/c1 + rs1(i);
-            r2(i)=  rhomat(2,1)*l2eci(i)/c2 + rs2(i);
-            r3(i)=  rhomat(3,1)*l3eci(i)/c3 + rs3(i);
-        end
-        fprintf(1,'r1 %11.7f %11.7f %11.7f \n',r1);
-        fprintf(1,'r2 %11.7f %11.7f %11.7f \n',r2);
-        fprintf(1,'r3 %11.7f %11.7f %11.7f \n',r3);
-
-        fprintf(1,'====================next loop \n');
-        % ----------------- check for convergence -----------------
-%         pause
-        fprintf(1,'rhoold while  %16.14f %16.14f \n',rhoold2,rho2);
-    end   % while the ranges are still changing
+% 
+%         rad = 180.0/pi;
+%         fprintf(1,'r1 %11.7f %11.7f %11.7f %11.7f %11.7f \n',r1,theta*rad,theta1*rad);
+%         fprintf(1,'r2 %11.7f %11.7f %11.7f \n',r2);
+%         fprintf(1,'r3 %11.7f %11.7f %11.7f \n',r3);
+%         fprintf(1,'w gibbs km/s       v2 %11.7f %11.7f %11.7f \n',v2);
+% 
+%         if ( (strcmp(error, '          ok') == 0) && (copa < 1.0/rad) ) % 0 is false
+%             [p,a,ecc,incl,omega,argp,nu,m,arglat,truelon,lonper ] = rv2coeh (r2,v2, re, mu);
+%             fprintf(1,'coes init ans %11.4f %11.4f %13.9f %13.7f %11.5f %11.5f %11.5f %11.5f\n',...
+%                 p,a,ecc,incl*rad,omega*rad,argp*rad,nu*rad,m*rad );
+%             % --- hgibbs to get middle vector ----
+%             [v2,theta,theta1,copa,error] = hgibbs(r1,r2,r3,jd1,jd2,jd3);
+%             fprintf(1,'using hgibbs: ' );
+%         end
+% 
+%         [p,a,ecc,incl,omega,argp,nu,m,arglat,truelon,lonper ] = rv2coeh (r2,v2, re, mu);
+%         fprintf(1,'coes init ans %11.4f %11.4f %13.9f %13.7f %11.5f %11.5f %11.5f %11.5f\n',...
+%             p,a,ecc,incl*rad,omega*rad,argp*rad,nu*rad,m*rad );
+%         %fprintf(1,'dr %11.7f m %11.7f m/s \n',1000*mag(r2-r2ans),1000*mag(v2-v2ans) );
+% 
+%         if ( ll <= 8 )  % 4
+%             % --- now get an improved estimate of the f and g series --
+%             u= mu / ( magr2*magr2*magr2 );
+%             rdot= dot(r2,v2)/magr2;
+%             udot= (-3.0*mu*rdot) / (magr2^4);
+% 
+%             fprintf(1,'u %17.15f rdot  %11.7f udot %11.7f \n',u,rdot,udot );
+%             tausqr= tau1*tau1;
+%             f1=  1.0 - 0.5*u*tausqr -(1.0/6.0)*udot*tausqr*tau1;
+%             %                       - (1.0/24.0) * u*u*tausqr*tausqr
+%             %                       - (1.0/30.0)*u*udot*tausqr*tausqr*tau1;
+%             g1= tau1 - (1.0/6.0)*u*tau1*tausqr - (1.0/12.0) * udot*tausqr*tausqr;
+%             %                       - (1.0/120.0)*u*u*tausqr*tausqr*tau1
+%             %                       - (1.0/120.0)*u*udot*tausqr*tausqr*tausqr;
+%             tausqr= tau3*tau3;
+%             f3=  1.0 - 0.5*u*tausqr -(1.0/6.0)*udot*tausqr*tau3;
+%             %                       - (1.0/24.0) * u*u*tausqr*tausqr
+%             %                       - (1.0/30.0)*u*udot*tausqr*tausqr*tau3;
+%             g3= tau3 - (1.0/6.0)*u*tau3*tausqr - (1.0/12.0) * udot*tausqr*tausqr;
+%             %                       - (1.0/120.0)*u*u*tausqr*tausqr*tau3
+%             %                       - (1.0/120.0)*u*udot*tausqr*tausqr*tausqr;
+%             fprintf(1,'f1 %11.7f g1 %11.7f f3 %11.7f g3 %11.7f \n',f1,g1,f3,g3 );
+%         else
+%             % -------- use exact method to find f and g -----------
+%             theta  = angl( r1,r2 );
+%             theta1 = angl( r2,r3 );
+% 
+%             f1= 1.0 - ( (magr1*(1.0 - cos(theta)) / p ) );
+%             g1= ( magr1*magr2*sin(-theta) ) / sqrt( p );  % - angl because backwards
+%             f3= 1.0 - ( (magr3*(1.0 - cos(theta1)) / p ) );
+%             g3= ( magr3*magr2*sin(theta1) ) / sqrt( p );
+% 
+%         end
+% 
+%         c1=  g3 / (f1*g3 - f3*g1);
+%         c3= -g1 / (f1*g3 - f3*g1);
+% 
+%         fprintf(1,' c1 %11.7f c3 %11.7f %11.7f \n',c1,c2,c3);
+% 
+%         % ----- solve for all three ranges via matrix equation ----
+%         cmat(1,1)= -c1;
+%         cmat(2,1)= -c2;
+%         cmat(3,1)= -c3;
+%         rhomat = lir*cmat;
+% 
+%         fprintf(1,'rhomat %11.7f %11.7f %11.7f \n',rhomat);
+%         %        fprintf(1,'rhomat %11.7f %11.7f %11.7f \n',rhomat/re);
+% 
+%         rhoold1=  rhomat(1,1)/c1;
+%         rhoold2=  rhomat(2,1)/c2;
+%         rhoold3=  rhomat(3,1)/c3;
+%         fprintf(1,'rhoold %11.7f %11.7f %11.7f \n',rhoold1,rhoold2,rhoold3);
+%         %   fprintf(1,'rhoold %11.7f %11.7f %11.7f \n',rhoold1/re,rhoold2/re,rhoold3/re);
+% 
+%         for i= 1 : 3
+%             r1(i)=  rhomat(1,1)*l1eci(i)/c1 + rs1(i);
+%             r2(i)=  rhomat(2,1)*l2eci(i)/c2 + rs2(i);
+%             r3(i)=  rhomat(3,1)*l3eci(i)/c3 + rs3(i);
+%         end
+%         fprintf(1,'r1 %11.7f %11.7f %11.7f \n',r1);
+%         fprintf(1,'r2 %11.7f %11.7f %11.7f \n',r2);
+%         fprintf(1,'r3 %11.7f %11.7f %11.7f \n',r3);
+% 
+%         fprintf(1,'====================next loop \n');
+%         % ----------------- check for convergence -----------------
+% %         pause
+%         fprintf(1,'rhoold while  %16.14f %16.14f \n',rhoold2,rho2);
+%     end   % while the ranges are still changing
 
     % ---------------- find all three vectors ri ------------------
     for i= 1 : 3

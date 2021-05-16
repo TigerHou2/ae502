@@ -176,16 +176,21 @@ disp(['    f = ' num2str(rad2deg(f)) ' deg'])
 [~,orbit] = ode45(@(t,y) xdot(y), 0:20:50000, [r;v], options);
 [~,data] = ode45(@(t,y) xdot(y), 0:20:TE(15), [r;v], options);
 
+% Earth
+[X,Y,Z] = sphere;
+
 figure(1)
 hold on
-plot3(orbit(:,1), orbit(:,2),orbit(:,3),'r','LineWidth',1.2)
-plot3(data(:,1), data(:,2),data(:,3),'b','LineWidth',1.2)
-scatter3(0,0,0,10,'k','filled')
+plot3(orbit(:,1), orbit(:,2),orbit(:,3),'r','LineWidth',1.4)
+plot3(data(:,1), data(:,2),data(:,3),'b','LineWidth',1.4)
+% scatter3(0,0,0,10,'k','filled')
+surf(X*6371,Y*6371,Z*6371)
 hold off
 view(3)
 xlabel('x, m')
 ylabel('y, m')
 zlabel('z, m')
+legend('Orbit','Observations','Earth','Location','best')
 axis equal
 setgrid
 latexify(16,14,14)
